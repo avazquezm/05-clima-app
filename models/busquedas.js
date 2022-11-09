@@ -1,11 +1,13 @@
+import fs from "fs";
 import axios from "axios";
 
 export default class Busquedas{
 
-    historial = ['Madrid', 'Barcelona', 'París'];
+    historial = [];
+    dbPath = './db/database.json'
 
     constructor() {
-        //TODO: Leer DB si existen datos
+        this.leerDB();
     }
 
 
@@ -15,6 +17,14 @@ export default class Busquedas{
             'types': 'country,place',
             'language': 'es',
             'limit': 5
+        }
+    }
+
+    get paramsOpenweather(){
+        return {
+            'appid':process.env.OPENWEATHER_KEY,
+            'lang': 'es',
+            'units': 'metric'
         }
     }
 
@@ -35,7 +45,7 @@ export default class Busquedas{
             return resp.data.features.map(lugar => ({
                 id: lugar.id,
                 nombre: lugar.place_name,
-                lng: lugar.center[0],
+                lon: lugar.center[0],
                 lat: lugar.center[1]
             }));
 
@@ -43,8 +53,74 @@ export default class Busquedas{
 
             console.log(error);
             return [];
-            
         }
+
+    }
+
+    async climaLugar( lat, lon ){
+
+        try {
+
+            const instance = axios.create({
+                baseURL:`https://api.openweathermap.org/data/2.5/weather`,
+                params: {...this.paramsOpenweather, lat, lon}
+            });
+
+            const resp = await instance.get();
+
+            const {main, weather} = resp.data;
+
+            return {
+                temp: main.temp,
+                tempMin: main.temp_min,
+                tempMax: main.temp_max,
+                humedad: main.humidity,
+                desc: weather[0].description
+            };
+
+            
+        } catch (error) {
+            console.log(error);
+            return [];
+        }
+
+    }
+
+    agregarHistorial(lugar = ''){
+
+        if(this.historial.includes(lugar)) return;
+
+        // Guardar solo 5 registros
+        this.historial = this.historial.splice(0,4);
+    
+        this.historial.unshift(lugar);
+
+        this.guardarDB();
+        
+    }
+
+    guardarDB(){
+
+        const payload = {
+            historial: this.historial
+        };
+
+        fs.writeFileSync(this.dbPath, JSON.stringify(payload));
+
+    }
+
+    leerDB(){
+
+        if(fs.existsSync(this.dbPath)){
+
+            const info = fs.readFileSync( this.dbPath, {'encoding':'utf-8'} );
+            const data = JSON.parse(info);
+
+            this.historial = data.historial; 
+
+        }
+
+        return;
 
     }
 

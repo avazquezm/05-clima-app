@@ -23,24 +23,35 @@ const main = async() =>{
 
                 // Seleccionar el lugar
                 const id = await listarLugares(lugares);
-                const lugarSel = lugares.find(l => l.id === id);
 
-                // Clima
-                // Mostrar resultados
-                console.log('\nInformación de la ciudad:'.green);
-                console.log('Ciudad:', lugarSel.nombre);
-                console.log('Lat:', lugarSel.lat);
-                console.log('Lng:', lugarSel.lng);
-                console.log('Temperatura:');
-                console.log('Mínima:');
-                console.log('Máxima:');
+                if (id !== 0 )
+                    {  
+                        const lugarSel = lugares.find(l => l.id === id);
+                        busquedas.agregarHistorial(lugarSel.nombre);
+
+                        // Clima
+                        const clima = await busquedas.climaLugar(lugarSel.lat, lugarSel.lon);
+
+                        // Mostrar resultados
+                        console.clear();
+                        console.log('\nInformación del clima:\n');
+                        console.log('Ciudad:'.bold, lugarSel.nombre.green);
+                        console.log('Clima:'.bold, clima.desc.cyan);
+                        console.log('Temperatura:'.bold, clima.temp, 'ºC'.yellow);
+                        console.log('Máxima:'.bold, clima.tempMax, 'ºC'.yellow);
+                        console.log('Mínima:'.bold, clima.tempMin, 'ºC'.yellow);
+                        console.log('Humedad:'.bold, clima.humedad, '%'.yellow);
+                        console.log('Latitud:'.bold, lugarSel.lat);
+                        console.log('Longitud:'.bold, lugarSel.lon);
+                    }
 
                 break;
             case 2:
-                console.log('Has seleccionado la opción 2');
-                break;
-            case 0:
-    
+                busquedas.historial.forEach((lugar, i) => {
+                    const idx = `${ i + 1 }.`.green
+                    console.log(`${idx} ${lugar}`);
+                });
+         
                 break;
             default:
                 break;
